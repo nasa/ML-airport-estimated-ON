@@ -277,14 +277,6 @@ All Rights Reserved.
 
 ### Disclaimers
 
-
-The “ATD-2 Machine Learning Airport Surface Model: Estimated Landing
-Time” software also makes use of the following 3rd party Open Source
-software:
-
-
-
-
 No Warranty: THE SUBJECT SOFTWARE IS PROVIDED "AS IS" WITHOUT ANY
 WARRANTY OF ANY KIND, EITHER EXPRESSED, IMPLIED, OR STATUTORY,
 INCLUDING, BUT NOT LIMITED TO, ANY WARRANTY THAT THE SUBJECT SOFTWARE
