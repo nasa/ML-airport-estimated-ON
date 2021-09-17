@@ -1,0 +1,39 @@
+globals:
+  airport_icao: KDFW
+
+  start_time: 2019-08-19
+  end_time: 2019-12-01
+  
+  batch_mode:
+    batch_days: 20
+    overlap_days: 1
+    pipelines:
+    - dqs
+    - de
+
+  tz_name: 'US/Central'
+
+  # If test_set_start_time not a valid datetime, then use random train-test
+  # split by default instead
+  test_set_start_time: None
+
+  fuser_db_credentials: misc_warehouse_credentials
+  runways_db_credentials: misc_warehouse_runways_db_credentials
+
+  known_runways:
+    - '17L'
+    - '17C'
+    - '17R'
+    - '18L'
+    - '18R'
+    - '36L'
+    - '36R'
+    - '35L'
+    - '35C'
+    - '35R'
+    - '13L'
+    - '13R'
+    - '31L'
+    - '31R'
+
+  arr_rwy_model_uri: models:/arrival_runway_KDFW/8

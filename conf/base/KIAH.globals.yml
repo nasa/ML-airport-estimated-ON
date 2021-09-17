@@ -1,0 +1,35 @@
+globals:
+  airport_icao: KIAH
+
+  start_time: 2020-04-10
+  end_time: 2020-12-31
+
+  batch_mode:
+    batch_days: 20
+    overlap_days: 1
+    pipelines:
+    - dqs
+    - de
+
+  tz_name: 'US/Central'
+
+  # If test_set_start_time not a valid datetime, then use random train-test
+  # split by default instead
+  test_set_start_time: None
+
+  fuser_db_credentials: misc_warehouse_credentials
+  runways_db_credentials: misc_warehouse_runways_db_credentials
+
+  known_runways:
+    - '26R'
+    - '26L'
+    - '27'
+    - '8L'
+    - '8R'
+    - '9'
+    - '15L'
+    - '15R'
+    - '33L'
+    - '33R'
+
+  arr_rwy_model_uri: None

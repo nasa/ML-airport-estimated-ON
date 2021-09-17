@@ -1,0 +1,31 @@
+globals:
+  airport_icao: KDFW
+  start_time: 2020-01-01
+  end_time: 2020-08-01
+  batch_mode:
+    batch_days: 20
+    overlap_days: 1
+    pipelines:
+    - dqs
+    - de
+  tz_name: 'US/Central'
+  # If test_set_start_time not a valid datetime, then use random train-test
+  # split by default instead
+  test_set_start_time: None
+  fuser_db_credentials: misc_warehouse_credentials
+  runways_db_credentials: misc_warehouse_runways_db_credentials
+  known_runways:
+    - '36R'
+    - '36L'
+    - '35R'
+    - '35C'
+    - '35L'
+    - '31R'
+    - '31L'
+    - '18R'
+    - '18L'
+    - '17R'
+    - '17C'
+    - '17L'
+    - '13L'
+    - '13R'

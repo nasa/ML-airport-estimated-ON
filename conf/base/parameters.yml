@@ -1,0 +1,509 @@
+# Copy of globals to facilitate access
+globals: ${globals}
+
+# MLFLOW
+mlflow:
+  tracking_uri: XXXXX
+  experiment_name: actual_on
+  run_name: DEFAULT
+  modeler_name: NONE  # needs to be updated per modeler; better in conf/local/?
+
+# DATA ENGINEERING HANDLING
+test_size: 0.3  # fraction for test set
+random_seed: 1234
+max_arrival_time_difference_seconds: 600
+max_at_landing_time_difference_seconds: 600
+tv_timestep: 30s  # time step length in time-varying data set
+tv_timestep_fraction_train: 0.02  # what fraction of time-varying timesteps to use when training
+tv_keep_non_train_timesteps: false
+suffix:
+  TBFM: _tbfm
+  landing_position: _at_landing
+df_join_kwargs:
+  MFS_df:
+    runways_df:
+      lsuffix: _MFS
+      rsuffix: _via_surveillance
+  tv_df:
+    ntv_df:
+      how: inner
+drop_duplicated_index_kwargs:
+  ntv_df:
+    keep: first
+merge_asof_tolerance: 120  # seconds; for merge_asof of arr_rwy data based on lookahead
+
+
+# SKLEARN FEATURE PREP PIPELINE
+# notes on pipeline_inspect_data_verbosity
+# 0: no data inspectors
+# 1: only right before going into model
+# 2: same as 1, plus inspect raw input right at start
+# 3: after all per-input impute, after all per-input encode,
+# and after all per-input transform steps
+# 4: between all steps
+pipeline_inspect_data_verbosity: 2
+# notes on data_inspector_verbosity
+# see source code
+data_inspector_verbosity: 2
+
+# MODELS
+models:
+  # Lasso:
+  #   baseline: false
+  #   predict_residual_of_input: seconds_to_arrival_runway_best_time
+  #   model_params:
+  #     alpha: 5.0
+  RandomForestRegressor:
+    baseline: false
+    predict_residual_of_input: seconds_to_arrival_runway_best_time
+    GridSearchCV: True
+    CV_params:
+      n_jobs: 11
+      cv: 5
+      refit: True
+      verbose: 100
+      scoring: neg_mean_absolute_error #neg_mean_squared_error,neg_median_absolute_error
+    model_params:
+      # If performing GridSearchCV, values for parameters must be in a list eg [100,400] 
+      # If not, remove brackets
+      #criterion: [mse]
+      n_estimators: [300,500]
+      #min_impurity_decrease: [100]
+      max_features: ['sqrt','auto']
+      min_samples_leaf: [1,20]
+      min_samples_split: [2,20]
+      #bootstrap: [True,False]
+      max_depth: [8,15,30]
+
+  #XGBRegressor:
+  #  baseline: false
+  #  predict_residual_of_input: seconds_to_arrival_runway_best_time
+  #  GridSearchCV: True
+  #  CV_params:
+  #    n_jobs: 11
+  #    cv: 5
+  #    refit: True
+  #    verbose: 100
+  #    scoring: neg_mean_absolute_error #neg_mean_squared_error #neg_mean_absolute_error
+  #    n_iter: 100
+  #  model_params:
+      # If performing GridSearchCV, values for parameters must be in a list eg [100,400] 
+      # If not, remove brackets
+  #    n_estimators: [300,600,1000]
+  #    learning_rate: [0.01,0.1,0.5]
+  #    max_depth:  [5,20]
+  #    min_child_weight: [0.01,0.3]
+  #    colsample_bytree: [0.3,0.8]
+  #    gamma: [1,10]
+  #    objective: [reg:pseudohubererror] #'reg:pseudohubererror',reg:squarederror
+  #    random_state: [1234]
+  #PassthroughEstimator:
+  #  baseline: true
+  #  model_params:
+  #    passthrough_feature: seconds_to_arrival_runway_best_time
+
+# TARGET
+# the _via_surveillance suffix denotes we're using the
+# runways data set as ground truth for arrival time
+target: 
+  name: seconds_to_arrival_runway_actual_time_via_surveillance
+  type: int
+  constraints:
+    min: -60  # shouldn't be making predictions >1min after landing
+    max: 36000  # 10 hours
+
+
+# INPUTS
+inputs:
+  ##### flight - time
+  timestamp:
+    core: true
+    type: datetime
+    # only used to calculate features; drop before model
+    drop_before_model: true
+  arrival_runway_best_time:
+    core: true
+    type: datetime
+    transformer: TimeDeltaTotalSecondsTransformer
+    transformer_params:
+      timedelta_start_col_name: timestamp
+      timedelta_end_col_name: arrival_runway_best_time
+      new_timedelta_col_name: seconds_to_arrival_runway_best_time
+    # only used to calculate features; drop before model
+    drop_before_model: true
+  # other ETAs
+  # how impute when missing?
+  # arrival_runway_eta_tbfm:
+  #   core: false
+  #   categorical: false
+  #   impute: false
+  # arrival_runway_sta_tbfm:
+  #   core: false
+  #   categorical: false
+  #   impute: false
+  # arrival_runway_estimated_time_tfms:
+  #   core: false
+  #   categorical: false
+  #   impute: false
+  
+  
+  # takeoff time
+  # TODO: could get this from the runways_actuals?
+  departure_runway_actual_time:
+    core: false
+    type: datetime
+    imputer: InputPassthroughImputer
+    imputer_params:
+      pass_from_field: time_first_tracked
+      # add_imputed_indicator: true  # to indicate if imputed or not
+    transformer: TimeDeltaTotalSecondsTransformer
+    transformer_params:
+      timedelta_start_col_name: departure_runway_actual_time
+      timedelta_end_col_name: timestamp
+      new_timedelta_col_name: seconds_since_departure_runway_actual_time
+    # only used to calculate features; drop before model
+    drop_before_model: true
+  # pushback time
+  departure_stand_actual_time:
+    core: false
+    type: datetime
+    imputer: InputPassthroughImputer
+    imputer_params:
+      pass_from_field: departure_runway_actual_time  # in turn may be imputed
+      # add_imputed_indicator: true  # to indicate if imputed or not
+    # only used to calculate features; drop before model
+    drop_before_model: true
+  # airline scheduled pushback time
+  departure_stand_initial_time:
+    core: false
+    type: datetime
+    imputer: InputPassthroughImputer
+    imputer_params:
+      pass_from_field: departure_stand_actual_time
+    transformer: TimeDeltaTotalSecondsTransformer
+    transformer_params:
+      timedelta_start_col_name: departure_stand_initial_time
+      timedelta_end_col_name: departure_stand_actual_time
+      new_timedelta_col_name: seconds_departure_stand_late
+    # only used to calculate features; drop before model
+    drop_before_model: true
+  # airline scheduled takeoff time
+  departure_runway_scheduled_time:
+    core: false
+    type: datetime
+    imputer: InputPassthroughImputer
+    imputer_params:
+      pass_from_field: departure_runway_actual_time  # in turn may be imputed
+      # add_imputed_indicator: true  # to indicate if imputed or not
+    transformer: TimeDeltaTotalSecondsTransformer
+    transformer_params:
+      timedelta_start_col_name: departure_runway_scheduled_time
+      timedelta_end_col_name: departure_runway_actual_time
+      new_timedelta_col_name: seconds_departure_runway_late
+    # only used to calculate features; drop before model
+    drop_before_model: true
+  
+  # first position time
+  time_first_tracked:
+    core: true
+    type: datetime
+    transformer: TimeDeltaTotalSecondsTransformer
+    transformer_params:
+      timedelta_start_col_name: time_first_tracked
+      timedelta_end_col_name: timestamp
+      new_timedelta_col_name: seconds_since_time_first_tracked
+    # only used to calculate features; drop before model
+    drop_before_model: true
+  arrival_runway_scheduled_time:
+    core: false
+    type: datetime
+    imputer: InputPassthroughImputer
+    imputer_params:
+      pass_from_field: arrival_runway_best_time
+      # add_imputed_indicator: true  # to indicate if imputed or not
+    transformer: TimeDeltaTotalSecondsTransformer
+    transformer_params:
+      timedelta_start_col_name: arrival_runway_scheduled_time
+      timedelta_end_col_name: arrival_runway_best_time
+      new_timedelta_col_name: seconds_arrival_runway_late
+    # only used to calculate features; drop before model
+    drop_before_model: true
+
+  # TBFM times
+  # TBFM CTM (sometimes is the "ready time" used in departure metering?)
+  # could grab value of it at pushback
+  # and compare to pushback time to get another indicator of pushback delay?
+
+  # ##### flight - location
+  # # TFM track data
+  # last_tfm_position_timestamp:
+  #   core: true
+  #   type: datetime
+  #   # only used to calculate features; drop before model
+  #   drop_before_model: true
+  # last_tfm_position_altitude:
+  #   core: true
+  #   type: float
+  #   constraints:
+  #     min: 0
+  #     max: 60000  # ft
+  #   # only used to calculate features; drop before model
+  #   drop_before_model: true
+  # last_tfm_position_heading:
+  #   core: true
+  #   type: float
+  #   constraints:
+  #     min: 0
+  #     max: 360
+  #   # only used to calculate features; drop before model
+  #   drop_before_model: true
+  # last_tfm_position_latitude:
+  #   core: true
+  #   type: float
+  #   constraints:
+  #     min: 0
+  #     max: 90
+  #   # only used to calculate features; drop before model
+  #   drop_before_model: true
+  # last_tfm_position_longitude:
+  #   core: true
+  #   type: float
+  #   constraints:
+  #     min: -180
+  #     max: 180
+  #   # only used to calculate features; drop before model
+  #   drop_before_model: true
+  # last_tfm_position_speed:
+  #   core: true
+  #   type: float
+  #   constraints:
+  #     min: 0
+  #     max: 1000  # knots?
+  #   # only used to calculate features; drop before model
+  #   drop_before_model: true
+
+  # TBFM positions too?
+  # in TBFM extension all table
+  # last_tbfm_position_timestamp:
+  #   core: true
+  # last_tbfm_position_altitude:
+  #   core: true
+  # last_tbfm_position_heading:
+  #   core: true
+  # last_tbfm_position_latitude:
+  #   core: true
+  # last_tbfm_position_longitude:
+  #   core: true
+  # last_tbfm_position_speed:
+  #   core: true
+  
+  ##### flight - other
+  arrival_stream_class_tbfm:
+    core: false
+    type: str
+    imputer: SimpleImputer
+    imputer_params:
+      strategy: constant
+      fill_value: UNKN
+    encoder: OneHotEncoder
+    encoder_params:
+      # imputation here b/c UNKN not in categories by default
+      handle_unknown: ignore
+  arrival_meter_fix_tbfm:
+    core: false
+    type: str
+    imputer: SimpleImputer
+    imputer_params:
+      strategy: constant
+      fill_value: UNKN
+    encoder: OneHotEncoder
+    encoder_params:
+      handle_unknown: ignore  # imputation here
+  arrival_runway_tbfm:
+    core: false
+    type: str
+    imputer: SimpleImputer
+    imputer_params:
+      strategy: constant
+      fill_value: UNKN
+    constraints:
+      include_vals: ${globals.known_runways}
+    encoder: OneHotEncoder
+    encoder_params:
+      categories: ${globals.known_runways}
+      handle_unknown: ignore  # imputation here
+  predicted_arrival_runway:
+    core: false
+    type: str
+    imputer: SimpleImputer
+    imputer_params:
+      strategy: constant
+      fill_value: UNKN
+    constraints:
+      include_vals: ${globals.known_runways}
+  #   # expect probability per option for this categorical feature,
+  #   # based on known runways per airport
+  #   # known runways must match up with arrival runway prediction outputs
+  #   # probabilities: true
+  #   # impute with TBFM arrival runway for now
+  #   # probabilities based on historic accuracy per runway
+  #   # and possibly based on lookahead
+  #   # and possibly based on whether or not TBFM runway was itself imputed
+  #   # imputer: arrival_runway_tbfm_probabilities
+  #   # imputer_params:
+  #   #   group_by_fields:
+  #   #     - arrival_runway_tbfm_imputed
+    encoder: OneHotEncoder
+    encoder_params:
+      categories: ${globals.known_runways}
+      # imputation here, but shouldn't need this b/c of constraint
+      handle_unknown: ignore
+  major_carrier:
+    core: false
+    type: str
+    imputer: SimpleImputer
+    imputer_params:
+      strategy: constant
+      fill_value: UNKN
+    encoder: OneHotEncoder
+    encoder_params:
+      handle_unknown: ignore  # impute here
+  aircraft_type:
+    core: false
+    type: str
+    imputer: SimpleImputer
+    imputer_params:
+      strategy: constant
+      fill_value: UNKN
+    encoder: AircraftClassEncoder  # imputes with one-hots all 0s
+
+  # ##### arrival airspace & airport
+    # adding in distance to runway encoder
+  #distance_to_runway:
+  #    core: false
+  #    type: float
+  #    encoder:
+  #      positions_at_landing: DistanceToRunwayEncoder
+ 
+  # # Counts of flights with best SWIM ETA
+  # # with same TBFM runway
+  # # in time bins near this flight's best SWIM ETA
+  # num_arrival_runway_best_time_m15_m10:
+  #   core: false
+  #   type: int
+  #   constraints:
+  #     min: 0
+  #     max: 30
+  #   imputer: SimpleImputer
+  #   imputer_params:
+  #     strategy: constant
+  #     fill_value: 0
+  #   drop_before_model: true  # for now
+  # num_arrival_runway_best_time_m10_m5:
+  #   core: false
+  #   type: int
+  #   constraints:
+  #     min: 0
+  #     max: 30
+  #   imputer: SimpleImputer
+  #   imputer_params:
+  #     strategy: constant
+  #     fill_value: 0
+  #   drop_before_model: true
+  # num_arrival_runway_best_time_m5_m2:
+  #   core: false
+  #   type: int
+  #   constraints:
+  #     min: 0
+  #     max: 30
+  #   imputer: SimpleImputer
+  #   imputer_params:
+  #     strategy: constant
+  #     fill_value: 0
+  #   drop_before_model: true
+  # num_arrival_runway_best_time_m2_p2:
+  #   core: false
+  #   type: int
+  #   constraints:
+  #     min: 0
+  #     max: 30
+  #   imputer: SimpleImputer
+  #   imputer_params:
+  #     strategy: constant
+  #     fill_value: 0
+  #   drop_before_model: true
+  # num_arrival_runway_best_time_p2_p5:
+  #   core: false
+  #   type: int
+  #   constraints:
+  #     min: 0
+  #     max: 30
+  #   imputer: SimpleImputer
+  #   imputer_params:
+  #     strategy: constant
+  #     fill_value: 0
+  #   drop_before_model: true
+  # num_arrival_runway_best_time_p5_p10:
+  #   core: false
+  #   type: int
+  #   constraints:
+  #     min: 0
+  #     max: 30
+  #   imputer: SimpleImputer
+  #   imputer_params:
+  #     strategy: constant
+  #     fill_value: 0
+  #   drop_before_model: true
+  # num_arrival_runway_best_time_p10_p15:
+  #   core: false
+  #   type: int
+  #   constraints:
+  #     min: 0
+  #     max: 30
+  #   imputer: SimpleImputer
+  #   imputer_params:
+  #     strategy: constant
+  #     fill_value: 0
+  #   drop_before_model: true
+
+  ##### weather
+
+  ##### other
+
+
+##### train-only inputs
+# these are just for learning where flights land on each runway
+# used to create a look-up table, then discarded
+# not used during actual model fitting or when making predictions
+inputs_train_only:
+  - arrival_runway_actual_via_surveillance
+  - position_timestamp_at_landing
+  - position_altitude_at_landing
+  - position_latitude_at_landing
+  - position_longitude_at_landing
+  - position_speed_at_landing
+  - position_heading_at_landing
+  - position_source_at_landing
+
+# TRANSFORMERS
+# TODO
+# list other transformers to apply in pipeline, w/ params
+
+# FEATURES
+# TODO
+# List any constraints on computed features
+# Adjust FilterPipeline to filter based on computed features
+
+# METRICS
+metrics:
+  mean_absolute_percentage_error:
+  median_absolute_percentage_error:
+  mean_absolute_error:
+  median_absolute_error:
+  mean_squared_error:
+  rmse:
+  percent_valid_predictions:
+  percent_within_n:
+    ns: [10, 30, 60]
+#  - log_likelihood
+#  - continuous_ranked_probability_score

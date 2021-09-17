@@ -1,0 +1,31 @@
+globals:
+  airport_icao: KCLT
+
+  start_time: 2020-04-10
+  end_time: 2020-12-31
+
+  batch_mode:
+    batch_days: 20
+    overlap_days: 1
+    pipelines:
+    - dqs
+    - de
+
+  tz_name: 'US/Eastern'
+
+  # If test_set_start_time not a valid datetime, then use random train-test
+  # split by default instead
+  test_set_start_time: None
+
+  fuser_db_credentials: misc_warehouse_credentials
+  runways_db_credentials: misc_warehouse_runways_db_credentials
+
+  known_runways:
+    - '36R'
+    - '36C'
+    - '36L'
+    - '18R'
+    - '18C'
+    - '18L'
+
+  arr_rwy_model_uri: models:/arrival_runway_KCLT/5

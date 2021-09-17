@@ -1,0 +1,228 @@
+### TBFM
+TBFM_data_set@DB:
+  type: data_services.kedro_extensions.io.sqlfile_dataset.SQLQueryFileChunkedDataSet
+  credentials: ${globals.fuser_db_credentials}
+  sqlfilepath: src/eon_service/pipelines/data_query_and_save/SQL/tbfm_data_query.sql
+  load_args:
+    chunk_size_days: 1
+    extend_first_start_time_hours: 12
+    params:
+      start_time: ${globals.start_time}
+      end_time: ${globals.end_time}
+      arrival_airport_icao: ${globals.airport_icao}
+
+TBFM_data_set@CSV:
+  type: pandas.CSVDataSet
+  filepath: data/01_raw/${globals.airport_icao}_${globals.start_time}_${globals.end_time}.TBFM_data_set.csv
+  versioned: false
+  load_args:
+    parse_dates: [
+      timestamp,
+      # arrival_meter_fix_eta,
+      arrival_runway_sta,
+      arrival_runway_eta,
+      # arrival_scheduling_fix_eta,
+      # arrival_scheduling_fix_sta,
+      # canceled_swim_release_time,
+      # std,
+      # ctm,
+    ]
+    low_memory: False
+
+### TFM track data
+TFM_track_data_set@DB:
+  type: data_services.kedro_extensions.io.sqlfile_dataset.SQLQueryFileChunkedDataSet
+  credentials: ${globals.fuser_db_credentials}
+  sqlfilepath: src/eon_service/pipelines/data_query_and_save/SQL/tfm_track_data_query.sql
+  load_args: 
+    chunk_size_days: 1
+    extend_first_start_time_hours: 12
+    params:
+      start_time: ${globals.start_time}
+      end_time: ${globals.end_time}
+      arrival_airport_icao: ${globals.airport_icao}
+
+TFM_track_data_set@CSV:
+  type: pandas.CSVDataSet
+  filepath: data/01_raw/${globals.airport_icao}_${globals.start_time}_${globals.end_time}.TFM_track_data_set.csv
+  versioned: false
+  load_args:
+    parse_dates: [
+      timestamp,
+      last_tfm_position_timestamp,
+    ]
+
+### MATM flight TFM data (for now just to get TFMS ETA)
+MF_TFM_data_set@DB:
+  type: data_services.kedro_extensions.io.sqlfile_dataset.SQLQueryFileChunkedDataSet
+  credentials: ${globals.fuser_db_credentials}
+  sqlfilepath: src/eon_service/pipelines/data_query_and_save/SQL/mf_tfm_data_query.sql
+  load_args: 
+    chunk_size_days: 1
+    extend_first_start_time_hours: 12
+    params:
+      start_time: ${globals.start_time}
+      end_time: ${globals.end_time}
+      arrival_airport_icao: ${globals.airport_icao}
+
+MF_TFM_data_set@CSV:
+  type: pandas.CSVDataSet
+  filepath: data/01_raw/${globals.airport_icao}_${globals.start_time}_${globals.end_time}.MF_TFM_data_set.csv
+  versioned: false
+  load_args:
+    parse_dates: [
+      timestamp,
+      tfms_eta,
+    ]
+
+# MATM flight summary data
+MFS_data_set@DB:
+  type: data_services.kedro_extensions.io.sqlfile_dataset.SQLQueryFileChunkedDataSet
+  credentials: ${globals.fuser_db_credentials}
+  sqlfilepath: src/eon_service/pipelines/data_query_and_save/SQL/mfs_data_query.sql
+  load_args:
+    chunk_size_days: 1
+    extend_first_start_time_hours: 0
+    params:
+      start_time: ${globals.start_time}
+      end_time: ${globals.end_time}
+      arrival_airport_icao: ${globals.airport_icao}
+
+MFS_data_set@CSV:
+  type: pandas.CSVDataSet
+  filepath: data/01_raw/${globals.airport_icao}_${globals.start_time}_${globals.end_time}.MFS_data_set.csv
+  versioned: false
+  load_args:
+    parse_dates: [
+      arrival_stand_actual_time,
+      arrival_stand_initial_time,
+      arrival_movement_area_actual_time,
+      arrival_runway_actual_time,
+      arrival_runway_scheduled_time,
+      departure_stand_actual_time,
+      departure_stand_initial_time,
+      departure_movement_area_actual_time,
+      departure_runway_actual_time,
+      departure_runway_scheduled_time,
+      estimated_departure_clearance_time,
+      departure_runway_metered_time_value,
+    ]
+
+# initial airline-scheduled stand times data
+stand_scheduled_times_data_set@DB:
+  type: data_services.kedro_extensions.io.sqlfile_dataset.SQLQueryFileChunkedDataSet
+  credentials: ${globals.fuser_db_credentials}
+  sqlfilepath: src/eon_service/pipelines/data_query_and_save/SQL/stand_scheduled_times_data_query.sql
+  load_args:
+    chunk_size_days: 1
+    extend_first_start_time_hours: 0
+    params:
+      start_time: ${globals.start_time}
+      end_time: ${globals.end_time}
+      arrival_airport_icao: ${globals.airport_icao}
+
+stand_scheduled_times_data_set@CSV:
+  type: pandas.CSVDataSet
+  filepath: data/01_raw/${globals.airport_icao}_${globals.start_time}_${globals.end_time}.stand_scheduled_times_data_set.csv
+  versioned: false
+  load_args:
+    parse_dates: [
+      departure_stand_scheduled_time_timestamp,
+      departure_stand_scheduled_time,
+      arrival_stand_scheduled_time_timestamp,
+      arrival_stand_scheduled_time,
+    ]
+
+# Actual on times & runways derived from track data
+runways_data_set@DB:
+  type: data_services.kedro_extensions.io.sqlfile_dataset.SQLQueryFileChunkedDataSet
+  credentials: ${globals.runways_db_credentials}
+  sqlfilepath: src/eon_service/pipelines/data_query_and_save/SQL/runways_data_query.sql
+  load_args:
+    chunk_size_days: 1
+    extend_first_start_time_hours: 0
+    params:
+      start_time: ${globals.start_time}
+      end_time: ${globals.end_time}
+      arrival_airport_icao: ${globals.airport_icao}
+
+runways_data_set@CSV:
+  type: pandas.CSVDataSet
+  filepath: data/01_raw/${globals.airport_icao}_${globals.start_time}_${globals.end_time}.runways_data_set.csv
+  versioned: false
+  load_args:
+    parse_dates: [
+      arrival_runway_actual_time,
+    ]
+
+# First position data
+first_position_data_set@DB:
+  type: data_services.kedro_extensions.io.sqlfile_dataset.SQLQueryFileChunkedDataSet
+  credentials: ${globals.fuser_db_credentials}
+  sqlfilepath: src/eon_service/pipelines/data_query_and_save/SQL/first_position_data_query.sql
+  load_args:
+    chunk_size_days: 1
+    extend_first_start_time_hours: 12
+    params:
+      start_time: ${globals.start_time}
+      end_time: ${globals.end_time}
+      arrival_airport_icao: ${globals.airport_icao}
+
+first_position_data_set@CSV:
+  type: pandas.CSVDataSet
+  filepath: data/01_raw/${globals.airport_icao}_${globals.start_time}_${globals.end_time}.first_position_data_set.csv
+  versioned: false
+  load_args:
+    parse_dates: [
+      time_first_tracked,
+    ]
+
+# landing position
+landing_position_data_set@DB:
+  type: data_services.kedro_extensions.io.sqlfile_dataset.SQLQueryFileChunkedDataSet
+  credentials: ${globals.fuser_db_credentials}
+  sqlfilepath: src/eon_service/pipelines/data_query_and_save/SQL/landing_position_data_query.sql
+  load_args:
+    chunk_size_days: 1
+    extend_first_start_time_hours: 0
+    params:
+      start_time: ${globals.start_time}
+      end_time: ${globals.end_time}
+      arrival_airport_icao: ${globals.airport_icao}
+
+landing_position_data_set@CSV:
+  type: pandas.CSVDataSet
+  filepath: data/01_raw/${globals.airport_icao}_${globals.start_time}_${globals.end_time}.landing_position_data_set.csv
+  versioned: false
+  load_args:
+    parse_dates: [
+      timestamp,
+      arrival_runway_actual_time,
+      position_timestamp,
+    ]
+
+aircrafts_classes_map@CSV:
+  type: pandas.CSVDataSet
+  filepath: data/01_raw/aircraft_type_mappings.csv
+
+aircraft_categories_dict@PKL:
+  type: pickle.PickleDataSet
+  filepath: data/05_model_input/aircraft_categories_dict.pkl
+
+# weather data?
+
+# Engineered data
+de_data_set@PKL:
+  type: pickle.PickleDataSet
+  filepath: data/05_model_input/${globals.airport_icao}.de_data_set.pkl
+  versioned: false
+
+# Engineered data for arrival runway prediction model
+arr_rwy_de_data_set@CSV:
+  type: pandas.CSVDataSet
+  filepath: ../ML-airport-arrival-runway/data/05_model_input/${globals.airport_icao}_${globals.start_time}_${globals.end_time}.de_data_set.csv
+  versioned: false
+  load_args:
+    dtype:
+      arrival_runway_actual: str
+    low_memory: false

@@ -1,0 +1,35 @@
+globals:
+  airport_icao: KATL
+
+  start_time: 2019-08-15
+  end_time: 2019-08-17
+
+  batch_mode:
+    batch_days: 3
+    overlap_days: 1
+    pipelines:
+    - dqs
+    - de
+
+  tz_name: 'US/Eastern'
+
+  # If test_set_start_time not a valid datetime, then use random train-test
+  # split by default instead
+  test_set_start_time: None
+
+  fuser_db_credentials: tbd_warehouse_credentials
+  runways_db_credentials: tbd_warehouse_runways_db_credentials
+
+  known_runways:
+    - '26L'
+    - '26R'
+    - '27L'
+    - '27R'
+    - '28'
+    - '10'
+    - '9L'
+    - '9R'
+    - '8L'
+    - '8R'
+
+arr_rwy_model_uri: None
