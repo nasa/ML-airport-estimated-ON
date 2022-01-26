@@ -1,5 +1,6 @@
 globals:
   airport_icao: KJFK
+  airport_iata: JFK
 
   start_time: 2020-04-10
   end_time: 2020-12-31
@@ -17,8 +18,8 @@ globals:
   # split by default instead
   test_set_start_time: None
 
-  fuser_db_credentials: misc_warehouse_credentials
-  runways_db_credentials: misc_warehouse_runways_db_credentials
+  fuser_db_credentials: fuser_db_credentials
+  runways_db_credentials: runways_db_credentials
 
   known_runways:
     - '22L'
@@ -30,4 +31,5 @@ globals:
     - '31L'
     - '31R'
 
-  arr_rwy_model_uri: models:/arrival_runway_KJFK/5
+  arr_rwy_model_uri: models:/arrival_runway_KJFK/9
+  surface_surveillance_available: True

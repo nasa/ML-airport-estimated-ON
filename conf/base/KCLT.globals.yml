@@ -1,5 +1,6 @@
 globals:
   airport_icao: KCLT
+  airport_iata: CLT
 
   start_time: 2020-04-10
   end_time: 2020-12-31
@@ -17,8 +18,8 @@ globals:
   # split by default instead
   test_set_start_time: None
 
-  fuser_db_credentials: misc_warehouse_credentials
-  runways_db_credentials: misc_warehouse_runways_db_credentials
+  fuser_db_credentials: fuser_db_credentials
+  runways_db_credentials: runways_db_credentials
 
   known_runways:
     - '36R'
@@ -28,4 +29,5 @@ globals:
     - '18C'
     - '18L'
 
-  arr_rwy_model_uri: models:/arrival_runway_KCLT/5
+  arr_rwy_model_uri: models:/arrival_runway_KCLT/9
+  surface_surveillance_available: True

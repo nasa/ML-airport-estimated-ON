@@ -1,5 +1,6 @@
 globals:
   airport_icao: KLGA
+  airport_iata: LGA
 
   start_time: 2020-04-25
   end_time: 2020-08-01
@@ -17,8 +18,8 @@ globals:
   # split by default instead
   test_set_start_time: None
 
-  fuser_db_credentials: misc_warehouse_credentials
-  runways_db_credentials: misc_warehouse_runways_db_credentials
+  fuser_db_credentials: fuser_db_credentials
+  runways_db_credentials: runways_db_credentials
 
   known_runways:
     - '4'
@@ -26,4 +27,5 @@ globals:
     - '13'
     - '31'
 
-  arr_rwy_model_uri: models:/arrival_runway_KLGA/1
+  arr_rwy_model_uri: models:/arrival_runway_KLGA/5
+  surface_surveillance_available: True

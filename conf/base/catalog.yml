@@ -1,6 +1,6 @@
 ### TBFM
 TBFM_data_set@DB:
-  type: data_services.kedro_extensions.io.sqlfile_dataset.SQLQueryFileChunkedDataSet
+  type: data_services.kedro_extensions.io.SQLQueryFileChunkedDataSetMultiCon
   credentials: ${globals.fuser_db_credentials}
   sqlfilepath: src/eon_service/pipelines/data_query_and_save/SQL/tbfm_data_query.sql
   load_args:
@@ -10,6 +10,7 @@ TBFM_data_set@DB:
       start_time: ${globals.start_time}
       end_time: ${globals.end_time}
       arrival_airport_icao: ${globals.airport_icao}
+  airport:  ${globals.airport_icao}
 
 TBFM_data_set@CSV:
   type: pandas.CSVDataSet
@@ -31,7 +32,7 @@ TBFM_data_set@CSV:
 
 ### TFM track data
 TFM_track_data_set@DB:
-  type: data_services.kedro_extensions.io.sqlfile_dataset.SQLQueryFileChunkedDataSet
+  type: data_services.kedro_extensions.io.SQLQueryFileChunkedDataSetMultiCon
   credentials: ${globals.fuser_db_credentials}
   sqlfilepath: src/eon_service/pipelines/data_query_and_save/SQL/tfm_track_data_query.sql
   load_args: 
@@ -41,6 +42,7 @@ TFM_track_data_set@DB:
       start_time: ${globals.start_time}
       end_time: ${globals.end_time}
       arrival_airport_icao: ${globals.airport_icao}
+  airport:  ${globals.airport_icao}
 
 TFM_track_data_set@CSV:
   type: pandas.CSVDataSet
@@ -54,7 +56,7 @@ TFM_track_data_set@CSV:
 
 ### MATM flight TFM data (for now just to get TFMS ETA)
 MF_TFM_data_set@DB:
-  type: data_services.kedro_extensions.io.sqlfile_dataset.SQLQueryFileChunkedDataSet
+  type: data_services.kedro_extensions.io.SQLQueryFileChunkedDataSetMultiCon
   credentials: ${globals.fuser_db_credentials}
   sqlfilepath: src/eon_service/pipelines/data_query_and_save/SQL/mf_tfm_data_query.sql
   load_args: 
@@ -64,6 +66,7 @@ MF_TFM_data_set@DB:
       start_time: ${globals.start_time}
       end_time: ${globals.end_time}
       arrival_airport_icao: ${globals.airport_icao}
+  airport:  ${globals.airport_icao}
 
 MF_TFM_data_set@CSV:
   type: pandas.CSVDataSet
@@ -77,7 +80,7 @@ MF_TFM_data_set@CSV:
 
 # MATM flight summary data
 MFS_data_set@DB:
-  type: data_services.kedro_extensions.io.sqlfile_dataset.SQLQueryFileChunkedDataSet
+  type: data_services.kedro_extensions.io.SQLQueryFileChunkedDataSetMultiCon
   credentials: ${globals.fuser_db_credentials}
   sqlfilepath: src/eon_service/pipelines/data_query_and_save/SQL/mfs_data_query.sql
   load_args:
@@ -87,6 +90,7 @@ MFS_data_set@DB:
       start_time: ${globals.start_time}
       end_time: ${globals.end_time}
       arrival_airport_icao: ${globals.airport_icao}
+  airport:  ${globals.airport_icao}
 
 MFS_data_set@CSV:
   type: pandas.CSVDataSet
@@ -110,7 +114,7 @@ MFS_data_set@CSV:
 
 # initial airline-scheduled stand times data
 stand_scheduled_times_data_set@DB:
-  type: data_services.kedro_extensions.io.sqlfile_dataset.SQLQueryFileChunkedDataSet
+  type: data_services.kedro_extensions.io.SQLQueryFileChunkedDataSetMultiCon
   credentials: ${globals.fuser_db_credentials}
   sqlfilepath: src/eon_service/pipelines/data_query_and_save/SQL/stand_scheduled_times_data_query.sql
   load_args:
@@ -120,7 +124,9 @@ stand_scheduled_times_data_set@DB:
       start_time: ${globals.start_time}
       end_time: ${globals.end_time}
       arrival_airport_icao: ${globals.airport_icao}
+  airport:  ${globals.airport_icao}
 
+      
 stand_scheduled_times_data_set@CSV:
   type: pandas.CSVDataSet
   filepath: data/01_raw/${globals.airport_icao}_${globals.start_time}_${globals.end_time}.stand_scheduled_times_data_set.csv
@@ -135,7 +141,7 @@ stand_scheduled_times_data_set@CSV:
 
 # Actual on times & runways derived from track data
 runways_data_set@DB:
-  type: data_services.kedro_extensions.io.sqlfile_dataset.SQLQueryFileChunkedDataSet
+  type: data_services.kedro_extensions.io.SQLQueryFileChunkedDataSetMultiCon
   credentials: ${globals.runways_db_credentials}
   sqlfilepath: src/eon_service/pipelines/data_query_and_save/SQL/runways_data_query.sql
   load_args:
@@ -144,8 +150,11 @@ runways_data_set@DB:
     params:
       start_time: ${globals.start_time}
       end_time: ${globals.end_time}
-      arrival_airport_icao: ${globals.airport_icao}
+      arrival_airport_iata: ${globals.airport_iata}
+      surf_surv_avail: ${globals.surface_surveillance_available}
+  airport:  ${globals.airport_icao}
 
+  
 runways_data_set@CSV:
   type: pandas.CSVDataSet
   filepath: data/01_raw/${globals.airport_icao}_${globals.start_time}_${globals.end_time}.runways_data_set.csv
@@ -157,7 +166,7 @@ runways_data_set@CSV:
 
 # First position data
 first_position_data_set@DB:
-  type: data_services.kedro_extensions.io.sqlfile_dataset.SQLQueryFileChunkedDataSet
+  type: data_services.kedro_extensions.io.SQLQueryFileChunkedDataSetMultiCon
   credentials: ${globals.fuser_db_credentials}
   sqlfilepath: src/eon_service/pipelines/data_query_and_save/SQL/first_position_data_query.sql
   load_args:
@@ -167,6 +176,7 @@ first_position_data_set@DB:
       start_time: ${globals.start_time}
       end_time: ${globals.end_time}
       arrival_airport_icao: ${globals.airport_icao}
+  airport:  ${globals.airport_icao}
 
 first_position_data_set@CSV:
   type: pandas.CSVDataSet
@@ -179,7 +189,7 @@ first_position_data_set@CSV:
 
 # landing position
 landing_position_data_set@DB:
-  type: data_services.kedro_extensions.io.sqlfile_dataset.SQLQueryFileChunkedDataSet
+  type: data_services.kedro_extensions.io.SQLQueryFileChunkedDataSetMultiCon
   credentials: ${globals.fuser_db_credentials}
   sqlfilepath: src/eon_service/pipelines/data_query_and_save/SQL/landing_position_data_query.sql
   load_args:
@@ -189,7 +199,9 @@ landing_position_data_set@DB:
       start_time: ${globals.start_time}
       end_time: ${globals.end_time}
       arrival_airport_icao: ${globals.airport_icao}
+  airport:  ${globals.airport_icao}
 
+  
 landing_position_data_set@CSV:
   type: pandas.CSVDataSet
   filepath: data/01_raw/${globals.airport_icao}_${globals.start_time}_${globals.end_time}.landing_position_data_set.csv
